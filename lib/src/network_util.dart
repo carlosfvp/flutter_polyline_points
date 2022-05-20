@@ -5,7 +5,9 @@ import 'package:http/http.dart' as http;
 import '../src/PointLatLng.dart';
 import '../src/utils/polyline_waypoint.dart';
 import '../src/utils/request_enums.dart';
+import 'utils/leg.dart';
 import 'utils/polyline_result.dart';
+import 'utils/step.dart';
 
 class NetworkUtil {
   static const String STATUS_OK = "ok";
@@ -55,6 +57,48 @@ class NetworkUtil {
           parsedJson["routes"].isNotEmpty) {
         result.points = decodeEncodedPolyline(
             parsedJson["routes"][0]["overview_polyline"]["points"]);
+
+        List<dynamic> wpOrder =
+            parsedJson["routes"][0]["waypoint_order"] as List<dynamic>;
+        result.waypointOrder = wpOrder.map((e) {
+          print(e);
+          return e as int;
+        }).toList();
+
+        List<dynamic> legs = parsedJson["routes"][0]["legs"] as List<dynamic>;
+        result.legs = legs.map((l) {
+          Leg leg = new Leg(
+              distance: l["distance"]["value"] as int,
+              distanceText: l["distance"]["text"] as String,
+              duration: l["duration"]["value"],
+              durationText: l["duration"]["text"],
+              startAddress: l["start_address"],
+              startLocation: new PointLatLng(
+                  l["start_location"]["lat"], l["start_location"]["lng"]),
+              endAddress: l["end_address"],
+              endLocation: new PointLatLng(
+                  l["end_location"]["lat"], l["start_location"]["lng"]));
+          List<dynamic> steps = l["steps"] as List<dynamic>;
+
+          leg.steps = steps.map(
+            (s) {
+              Step step = new Step(
+                  distance: s["distance"]["value"] as int,
+                  distanceText: s["distance"]["text"] as String,
+                  duration: s["duration"]["value"],
+                  durationText: s["duration"]["text"],
+                  startLocation: new PointLatLng(
+                      s["start_location"]["lat"], s["start_location"]["lng"]),
+                  endLocation: new PointLatLng(
+                      s["end_location"]["lat"], s["start_location"]["lng"]),
+                  htmlInstructions: s["html_instructions"],
+                  points: decodeEncodedPolyline(s["polyline"]["points"]));
+              return step;
+            },
+          ).toList();
+
+          return leg;
+        }).toList();
       } else {
         result.errorMessage = parsedJson["error_message"];
       }
