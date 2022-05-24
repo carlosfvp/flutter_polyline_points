@@ -19,6 +19,14 @@ class PolylineResult {
 
   List<int> waypointOrder;
 
+  int getRouteTimeSeconds() {
+    int total = 0;
+    legs.forEach((element) {
+      total += element.duration ?? 0;
+    });
+    return total;
+  }
+
   /// the error message returned from google, if none, the result will be empty
   String? errorMessage;
 
